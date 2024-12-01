@@ -1,5 +1,20 @@
-FROM python:3.11-alpine
-COPY . /app
+# Use a Python base image
+FROM python:3.11-slim
+
+# Set the working directory
 WORKDIR /app
-RUN pip install -r requirements.txt
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy bot files
+COPY . .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Set the command to run the bot
 CMD ["python", "main.py"]

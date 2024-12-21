@@ -4,6 +4,7 @@ from discord.app_commands import CommandTree
 from utils.yt import YT
 from utils.queueSys import music_queue, channelQueue
 from cogs.utils import next_song
+from typing import Optional
 
 class YTMusic(commands.Cog):
 
@@ -12,15 +13,17 @@ class YTMusic(commands.Cog):
         self.yt = YT()
 
     @discord.app_commands.command(name="play", description="Play a song")
-    async def play(self, ctx: discord.Interaction, song: str):
+    async def play(self, ctx: discord.Interaction, song: str, channel: Optional[discord.VoiceChannel] = None):
         await ctx.response.defer()
 
         # Check if the user is in a voice channel
         if not ctx.user.voice or not ctx.user.voice.channel:
-            await ctx.followup.send("You must be in a voice channel to use this command.")
-            return
-
-        voice_channel = ctx.user.voice.channel
+            if channel is None:
+                await ctx.followup.send("You must be in a voice channel to use this command.")
+                return
+            voice_channel = channel
+        else:
+            voice_channel = ctx.user.voice.channel
 
         # Search for the song
         videos = self.yt.search(song, max_results=1)

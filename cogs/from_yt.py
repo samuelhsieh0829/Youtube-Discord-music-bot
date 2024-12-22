@@ -62,7 +62,7 @@ class YTMusic(commands.Cog):
     async def song_autocomplete(self, ctx:discord.Interaction, current:str):
         videos = self.yt.search(current, max_results=10)
         return [
-                discord.app_commands.Choice(name=video.title, value=video.id)
+                discord.app_commands.Choice(name=video.title, value=video.url)
                 for video in videos
             ]
     

@@ -46,17 +46,18 @@ class YT:
         }
 
         try:
-            # Perform the search using yt-dlp
+                # Perform the search using yt-dlp
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 results = ydl.extract_info(f"ytsearch{max_results}:{query}", download=False)
 
             # Convert results into Video objects
             return [
-                Video(video_id=entry['id'], video_title=entry['title'])
+                Video(video_id=entry['id'], video_title=entry['title'], url=entry['url'])
                 for entry in results['entries']
             ]
+        
         except Exception as e:
-            print(f"Error during yt-dlp search: {e}")
+            print(f"Error during yt-dlp search for query {query}: {e}")
             # Fallback: Assume the query is a video ID
             return [Video(video_id=query, video_title=query)]
 

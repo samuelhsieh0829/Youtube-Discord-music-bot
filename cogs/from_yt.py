@@ -40,6 +40,10 @@ class YTMusic(commands.Cog):
         elif voice.channel != voice_channel:
             await voice.move_to(voice_channel)
 
+        if isinstance(voice, discord.StageChannel):
+            member = voice.guild.me
+            await member.edit(suppress=False)
+
         # Check if a song is already playing
         if voice.is_playing():
             # Add the song to the queue

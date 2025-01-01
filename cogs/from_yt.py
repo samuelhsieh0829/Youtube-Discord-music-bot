@@ -49,7 +49,7 @@ class YTMusic(commands.Cog):
             # Add the song to the queue
             if voice not in music_queue:
                 music_queue[voice] = channelQueue(None, ctx)
-            music_queue[voice].add(video.id)
+            music_queue[voice].add(video.url)
             await ctx.followup.send(f"Added to queue: **{video.title}**")
             return
 

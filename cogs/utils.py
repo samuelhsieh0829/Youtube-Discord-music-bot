@@ -15,6 +15,7 @@ class Utils(commands.Cog):
     async def stop(self, ctx:discord.Interaction):
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         if voice:
+            music_queue[voice].clear()
             await voice.disconnect()
             await ctx.response.send_message("Music stopped.")
         else:
@@ -60,7 +61,7 @@ async def next_song(ctx: discord.Interaction):
     # Search and play the next song
     video = yt.search(song_id, max_results=1)[0]
     await ctx.followup.send(f"Now playing: **{video.title}**")
-    audio = yt.stream(song_id)
+    audio = yt.stream(video.id)
     music_queue[voice].current = audio
     voice.play(
         discord.FFmpegPCMAudio(audio.stdout, pipe=True),

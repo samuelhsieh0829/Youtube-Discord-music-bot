@@ -17,6 +17,7 @@ class channelQueue:
         return self.queue.get()
     
     def clear(self):
+        self.current.terminate()
         while not self.queue.empty():
             self.queue.get()
 

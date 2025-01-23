@@ -44,7 +44,8 @@ async def next_song(ctx: discord.Interaction):
     music_queue[voice].current.terminate()
     # Check if the queue exists and is not empty
     if voice not in music_queue or music_queue[voice].queue.empty():
-        await ctx.followup.send("Queue is empty. Leaving the voice channel.")
+        await ctx.channel.send("Queue is empty. Leaving the voice channel.")
+
         if voice in music_queue:
             music_queue.pop(voice)
         await voice.disconnect()
@@ -53,14 +54,14 @@ async def next_song(ctx: discord.Interaction):
     # Get the next song from the queue
     song_id = music_queue[voice].next()
     if not song_id:
-        await ctx.followup.send("No more songs in the queue. Disconnecting.")
+        await ctx.channel.send("No more songs in the queue. Disconnecting.")
         music_queue.pop(voice)
         await voice.disconnect()
         return
 
     # Search and play the next song
     video = yt.search(song_id, max_results=1)[0]
-    await ctx.followup.send(f"Now playing: **{video.title}**")
+    await ctx.channel.send(f"Now playing: **{video.title}**")
     audio = yt.stream(video.id)
     music_queue[voice].current = audio
     voice.play(

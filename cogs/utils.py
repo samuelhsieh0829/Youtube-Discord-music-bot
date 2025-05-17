@@ -1,3 +1,5 @@
+from typing import Optional
+
 import discord
 from discord.ext import commands
 from discord.app_commands import CommandTree
@@ -36,6 +38,30 @@ class Utils(commands.Cog):
         else:
             await ctx.followup.send("No song is currently playing.")
 
+    @discord.app_commands.command(name="volume", description="Set the volume 0~100")
+    async def change_volume(self, ctx: discord.Interaction, volume: Optional[int]):
+        await ctx.response.defer()
+        voice_client = discord.utils.get(ctx.client.voice_clients, guild=ctx.guild)
+        try:
+            voice = music_queue[voice_client]
+        except KeyError:
+            await ctx.followup.send("I am not connected to a voice channel.")
+            return
+        
+        if not voice:
+            await ctx.followup.send("I am not connected to a voice channel.")
+            return
+        
+        if volume is None:
+            await ctx.followup.send(f"Current volume: {int(voice.volume * 100)}%")
+            return
+        
+        if 0 <= volume <= 100:
+            voice.set_volume(volume / 100)
+            await ctx.followup.send(f"Volume set to {volume}%.")
+        else:
+            await ctx.followup.send("Volume must be between 0 and 100.")
+
 async def next_song(ctx: discord.Interaction):
     voice = discord.utils.get(ctx.client.voice_clients, guild=ctx.guild)
     if not voice or not voice.is_connected():
@@ -65,7 +91,7 @@ async def next_song(ctx: discord.Interaction):
     audio = yt.stream(video.id)
     music_queue[voice].current = audio
     voice.play(
-        discord.FFmpegPCMAudio(audio.stdout, pipe=True),
+        music_queue[voice].audio,
         after=lambda _: ctx.client.loop.create_task(next_song(ctx)),
     )
 

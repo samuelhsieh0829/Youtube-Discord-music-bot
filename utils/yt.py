@@ -1,14 +1,20 @@
-from pytube import YouTube
 import os
+import subprocess
+
+from pytube import YouTube
 from youtube_api import YouTubeDataAPI
 from dotenv import load_dotenv
+import yt_dlp
+
 from utils.video import Video
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, TIT2
-import yt_dlp
-import subprocess
+from utils.logger import setup_logger
 
 load_dotenv()
+
+log = setup_logger(__name__)
+
 yt_api_key = os.getenv("YT_TOKEN")
 
 class YT:
@@ -16,17 +22,17 @@ class YT:
 
     def __init__(self):
         if not yt_api_key:
-            print("No YT API key found.")
+            log.error("No YT API key found.")
         self.yt = YouTubeDataAPI(yt_api_key)
 
     # def search(self, query:str, max_results=10) -> list[Video]:
     #     if self.yt is None:
-    #         print("No YT API key found. Cannot search.")
+    #         log.error("No YT API key found. Cannot search.")
     #         return []
     #     try:
     #         resp = self.yt.search(q=query, max_results=max_results)
-    #     except Exception as e:
-    #         print(e)
+    #     except Exception:
+    #         log.exception("Error during YT API search")
     #         return [Video(video_id=query, video_title=query)]
     #     videos = []
     #     for video in resp:
@@ -56,8 +62,8 @@ class YT:
                 for entry in results['entries']
             ]
         
-        except Exception as e:
-            print(f"Error during yt-dlp search for query {query}: {e}")
+        except Exception:
+            log.exception(f"Error during yt-dlp search for query {query}:")
             # Fallback: Assume the query is a video ID
             return [Video(video_id=query, video_title=query)]
 

@@ -7,9 +7,9 @@ import typing
 from dotenv import load_dotenv
 from utils.queueSys import music_queue, channelQueue
 import asyncio
-import logging
+from utils.logger import setup_logger
 
-logging.basicConfig(level=logging.INFO)
+log = setup_logger(__name__)
 
 load_dotenv()
 
@@ -21,11 +21,11 @@ cogs = ["cogs.from_yt", "cogs.utils", "cogs.local"]
 
 @bot.event
 async def on_ready():
-    print(f"logged in as {bot.user.name}")
+    log.info(f"logged in as {bot.user.name}")
     try:
         await bot.tree.sync()
-    except Exception as e:
-        print(e)
+    except Exception:
+        log.exception("Failed to sync commands")
 
 @bot.tree.command(name="manage", description="Manage commands")
 async def manage(ctx:discord.Interaction):
@@ -59,10 +59,13 @@ async def manage(ctx:discord.Interaction):
 async def on_command_error(ctx:discord.Interaction, error):
     if isinstance(error, discord.app_commands.errors.CommandNotFound):
         await ctx.response.send_message("Command unaviailable or not found.")
-        print(error)
+        log.error(error)
     else:
-        await ctx.response.send_message(f"An error occurred")
-        print(type(error), error)
+        try:
+            await ctx.response.send_message(f"An error occurred")
+            log.error(type(error), error)
+        except discord.errors.InteractionResponded:
+            return
 
 async def main():
     for cog in cogs:

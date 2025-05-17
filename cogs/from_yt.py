@@ -57,8 +57,11 @@ class YTMusic(commands.Cog):
         await ctx.followup.send(f"Now playing: **{video.title}**")
         audio = self.yt.stream(video.id)
         music_queue[voice] = channelQueue(audio, ctx)
+        if music_queue[voice].audio is None:
+            await ctx.followup.send("Error: Audio stream is None.")
+            return
         voice.play(
-            discord.FFmpegPCMAudio(audio.stdout, pipe=True),
+            music_queue[voice].audio,
             after=lambda _: self.bot.loop.create_task(next_song(ctx)),
         )
 

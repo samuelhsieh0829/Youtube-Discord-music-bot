@@ -19,6 +19,15 @@ class channelQueue:
     def add(self, song:str):
         self.queue.put(song)
 
+    def set_current(self, current:Popen):
+        self.current = current
+        if self.current is not None:
+            self.__audio = discord.PCMVolumeTransformer(
+                discord.FFmpegPCMAudio(self.current.stdout, pipe=True), self.volume
+            )
+        else:
+            self.__audio = None
+
     def next(self) -> str | None:
         if self.queue.empty():
             return None

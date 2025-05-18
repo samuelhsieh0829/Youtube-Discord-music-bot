@@ -86,10 +86,20 @@ async def next_song(ctx: discord.Interaction):
         return
 
     # Search and play the next song
-    video = yt.search(song_id, max_results=1)[0]
+    results = yt.search(song_id, max_results=5)
+    if not results:
+        await ctx.channel.send("No results found.")
+        await next_song(ctx)
+        return
+    
+    video = results[0]  # First search result
+    for result in results:
+        if result.id == song_id:
+            video = result
+            break
     await ctx.channel.send(f"Now playing: **{video.title}**")
     audio = yt.stream(video.id)
-    music_queue[voice].current = audio
+    music_queue[voice].set_current(audio)
     voice.play(
         music_queue[voice].audio,
         after=lambda _: ctx.client.loop.create_task(next_song(ctx)),

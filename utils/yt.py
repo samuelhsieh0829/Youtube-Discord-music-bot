@@ -1,5 +1,6 @@
 import os
 import subprocess
+import re
 
 from pytube import YouTube
 from youtube_api import YouTubeDataAPI
@@ -16,6 +17,10 @@ load_dotenv()
 log = setup_logger(__name__)
 
 yt_api_key = os.getenv("YT_TOKEN")
+
+YOUTUBE_URL_RE = re.compile(
+    r"(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w\-]{11})"
+)
 
 class YT:
     YT_BASE_URL = "https://www.youtube.com/watch?v="
@@ -46,21 +51,33 @@ class YT:
         ydl_opts = {
             'quiet': True,  # Suppress yt-dlp output
             'format': 'bestaudio/best',  # Ensure we only deal with audio or best formats
-            'default_search': 'ytsearch',  # Use YouTube search
+            # 'default_search': 'ytsearch',  # Use YouTube search
             'extract_flat': True,  # Get metadata only, no downloads
             'noplaylist': True,  # Exclude playlists
         }
 
+        is_url = YOUTUBE_URL_RE.match(query)
+
+        if not is_url:
+            # If the query is not a URL, we can use yt-dlp to search
+            # Use yt-dlp to search for the video
+            ydl_opts['default_search'] = 'ytsearch'
+
         try:
                 # Perform the search using yt-dlp
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                results = ydl.extract_info(f"ytsearch{max_results}:{query}", download=False)
-
-            # Convert results into Video objects
-            return [
-                Video(video_id=entry['id'], video_title=entry['title'], url=entry['url'])
-                for entry in results['entries']
-            ]
+                if not is_url:
+                    results = ydl.extract_info(f"ytsearch{max_results}:{query}", download=False)
+                    # Convert results into Video objects
+                    return [
+                        Video(video_id=entry['id'], video_title=entry['title'], url=entry['url'])
+                        for entry in results['entries']
+                    ]
+                else:
+                    results = ydl.extract_info(query, download=False)
+                    return [
+                        Video(video_id=results['id'], video_title=results['title'], url=YT.YT_BASE_URL + results['id'])
+                    ]
         
         except Exception:
             log.exception(f"Error during yt-dlp search for query {query}:")
@@ -79,6 +96,7 @@ class YT:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             stream_url = info["url"]  # Direct audio stream URL
+            # return stream_url
 
         ffmpeg_options = (
             f"ffmpeg -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 "

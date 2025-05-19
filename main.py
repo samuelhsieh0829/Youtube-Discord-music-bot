@@ -32,7 +32,7 @@ async def manage(ctx:discord.Interaction):
     await ctx.response.defer(ephemeral=True)
     
     if ctx.user.id != 551395982756282369:
-        await ctx.followup.send("You can manage your brain first :)")
+        await ctx.followup.send("❌You can manage your brain first :)")
         return
     
     embed = discord.Embed(title="Manage commands", description="Manage the commands of the bot", color=discord.Color.blurple())
@@ -51,18 +51,18 @@ async def manage(ctx:discord.Interaction):
                 await bot.unload_extension(select.values[0])
             else:
                 await bot.load_extension(select.values[0])
-            await ctx.response.send_message(f"Successfully {'un' if select.values[0] not in bot.extensions else ''}loaded {select.values[0]}.", ephemeral=True)
+            await ctx.response.send_message(f"✅Successfully {'un' if select.values[0] not in bot.extensions else ''}loaded {select.values[0]}.", ephemeral=True)
 
     await ctx.followup.send(embed=embed, view=SelectView())
 
 @bot.tree.error
 async def on_command_error(ctx:discord.Interaction, error):
     if isinstance(error, discord.app_commands.errors.CommandNotFound):
-        await ctx.response.send_message("Command unaviailable or not found.")
+        await ctx.response.send_message("❌Command unaviailable or not found.")
         log.error(error)
     else:
         try:
-            await ctx.response.send_message(f"An error occurred")
+            await ctx.response.send_message(f"❌An error occurred")
             log.error(type(error), error)
         except discord.errors.InteractionResponded:
             return

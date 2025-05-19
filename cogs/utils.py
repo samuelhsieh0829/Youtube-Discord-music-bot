@@ -19,7 +19,7 @@ class Utils(commands.Cog):
         if voice:
             music_queue[voice].clear()
             await voice.disconnect()
-            await ctx.response.send_message("Music stopped.")
+            await ctx.response.send_message("⏹️Music stopped.")
         else:
             await ctx.response.send_message("I am not connected to a voice channel.")
 
@@ -53,12 +53,12 @@ class Utils(commands.Cog):
             return
         
         if volume is None:
-            await ctx.followup.send(f"Current volume: {int(voice.volume * 100)}%")
+            await ctx.followup.send(f"🔊Current volume: {int(voice.volume * 100)}%")
             return
         
         if 0 <= volume <= 100:
             voice.set_volume(volume / 100)
-            await ctx.followup.send(f"Volume set to {volume}%.")
+            await ctx.followup.send(f"🔊Volume set to {volume}%.")
         else:
             await ctx.followup.send("Volume must be between 0 and 100.")
 
@@ -68,6 +68,7 @@ async def next_song(ctx: discord.Interaction):
         return
     
     music_queue[voice].current.terminate()
+
     # Check if the queue exists and is not empty
     if voice not in music_queue or music_queue[voice].queue.empty():
         await ctx.channel.send("Queue is empty. Leaving the voice channel.")
@@ -97,7 +98,7 @@ async def next_song(ctx: discord.Interaction):
         if result.id == song_id:
             video = result
             break
-    await ctx.channel.send(f"Now playing: **{video.title}**")
+    await ctx.channel.send(f"▶️Now playing: **{video.title}**")
     audio = yt.stream(video.id)
     music_queue[voice].set_current(audio)
     voice.play(

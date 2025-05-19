@@ -19,7 +19,7 @@ class YTMusic(commands.Cog):
         # Check if the user is in a voice channel
         if not ctx.user.voice or not ctx.user.voice.channel:
             if channel is None:
-                await ctx.followup.send("You must be in a voice channel to use this command.")
+                await ctx.followup.send("❌You must be in a voice channel to use this command.")
                 return
             voice_channel = channel
         else:
@@ -28,7 +28,7 @@ class YTMusic(commands.Cog):
         # Search for the song
         videos = self.yt.search(song, max_results=1)
         if not videos:
-            await ctx.followup.send(f"No results for '{song}'")
+            await ctx.followup.send(f"❌No results for '{song}'")
             return
 
         video = videos[0]  # First search result
@@ -50,15 +50,15 @@ class YTMusic(commands.Cog):
             if voice not in music_queue:
                 music_queue[voice] = channelQueue(None, ctx)
             music_queue[voice].add(video.url)
-            await ctx.followup.send(f"Added to queue: **{video.title}**")
+            await ctx.followup.send(f"➕Added to queue: **{video.title}**")
             return
 
         # Play the song if no music is currently playing
-        await ctx.followup.send(f"Now playing: **{video.title}**")
+        await ctx.followup.send(f"▶️Now playing: **{video.title}**")
         audio = self.yt.stream(video.id)
         music_queue[voice] = channelQueue(audio, ctx)
         if music_queue[voice].audio is None:
-            await ctx.followup.send("Error: Audio stream is None.")
+            await ctx.followup.send("❌Error: Audio stream is None.")
             return
         voice.play(
             music_queue[voice].audio,

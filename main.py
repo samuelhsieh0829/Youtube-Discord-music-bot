@@ -78,7 +78,7 @@ async def view_errors(ctx:discord.Interaction):
         await ctx.response.send_message("❌You can view your own errors first :)")
         return
     
-    ctx.response.defer(ephemeral=True)
+    await ctx.response.defer(ephemeral=True)
     if not errors:
         await ctx.followup.send("No errors logged.")
         return

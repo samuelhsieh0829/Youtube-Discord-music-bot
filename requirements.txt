@@ -4,3 +4,4 @@ python-dotenv==1.2.1
 pytube==15.0.0
 youtube_data_api==0.0.21
 yt_dlp==2025.12.8
+pynacl

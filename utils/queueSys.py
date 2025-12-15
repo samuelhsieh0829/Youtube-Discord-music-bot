@@ -1,11 +1,14 @@
 import queue
+import random
 from subprocess import Popen
 import discord
 import threading
 
+from utils.video import Video
+
 class channelQueue:
     def __init__(self, current:Popen, ctx:discord.Interaction) -> None:
-        self.queue = queue.Queue()
+        self.queue:queue.Queue[Video] = queue.Queue()
         self.current = current
         self.volume = 0.15 # Default volume
         if self.current is not None:
@@ -29,7 +32,7 @@ class channelQueue:
         else:
             self.__audio = None
 
-    def next(self) -> str | None:
+    def next(self) -> Video | None:
         if self.queue.empty():
             return None
         return self.queue.get()
@@ -42,6 +45,17 @@ class channelQueue:
     def set_volume(self, volume:float):
         self.volume = volume
         self.__audio.volume = volume
+
+    def shuffle(self):
+        temp_list = []
+        while not self.queue.empty():
+            temp_list.append(self.queue.get())
+        random.shuffle(temp_list)
+        for item in temp_list:
+            self.queue.put(item)
+
+    def get_queue_list(self) -> list[Video]:
+        return list(self.queue.queue)
 
     @property
     def audio(self):

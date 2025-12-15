@@ -111,6 +111,29 @@ class YT:
         process = subprocess.Popen(ffmpeg_options.split(), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         return process
 
+    def get_playlist_videos(self, url:str) -> tuple[str, list[Video]] | None:
+        try:
+            if "https://www.youtube.com/playlist?list=" not in url:
+                log.warning(f"Invalid playlist URL: {url}")
+                return None
+            
+            videos = []
+
+            ydl_opts = {
+                'quiet': True,
+                'format': 'bestaudio/best',
+                'extract_flat': True,
+                'noplaylist': False,
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                results = ydl.extract_info(url, download=False)
+                for entry in results.get('entries', []):
+                    videos.append(Video(video_id=entry['id'], video_title=entry['title'], url=entry['url']))
+            return (results.get("title"), videos)
+        except Exception:
+            log.exception(f"Error fetching playlist videos for playlist URL: {url}")
+            return None
+
     @staticmethod    
     def download(target_url:str, filename:str=None) -> list[bool, str]:
         if not target_url.startswith(YT.YT_BASE_URL):

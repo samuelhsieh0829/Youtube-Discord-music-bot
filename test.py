@@ -1,4 +1,5 @@
 import yt_dlp
+import subprocess
 
 # ydl_opts = {
 #             'quiet': True,  # Suppress yt-dlp output
@@ -18,10 +19,16 @@ ydl_opts = {
         }
 
 url = 'https://www.youtube.com/watch?v=c7E-tgmFuzw'
+url = "https://www.youtube.com/watch?v=34MrZbciINA"
 
 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
     # results = ydl.extract_info(f"ytsearch{1}:{'https://www.youtube.com/watch?v=c7E-tgmFuzw'}", download=False)
     results = ydl.extract_info(url, download=False)
-    # print(results["id"], results["title"], results["url"])
-    print(results)
+    print(results["id"], results["title"], results["url"])
+    # print(results)
+    ffmpeg_options = (
+             f"ffmpeg -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 "
+             f"-i {results['url']} -acodec libopus -f opus -ar 48000 -ac 2 pipe:1"
+         )
+    process = subprocess.Popen(ffmpeg_options.split(), stdout=subprocess.PIPE)
     # print(results['entries'][0]["url"])

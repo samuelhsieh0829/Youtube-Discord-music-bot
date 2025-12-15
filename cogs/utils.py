@@ -5,6 +5,9 @@ from discord.ext import commands
 from discord.app_commands import CommandTree
 from utils.yt import YT
 from utils.queueSys import music_queue, channelQueue
+from utils.logger import setup_logger
+
+log = setup_logger(__name__)
 
 yt = YT()
 
@@ -15,62 +18,80 @@ class Utils(commands.Cog):
 
     @discord.app_commands.command(name="stop", description="Stop the music")
     async def stop(self, ctx:discord.Interaction):
+        log.info(f"Received stop request from {ctx.user.name}")
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         if voice:
+            log.debug(f"Stopping music and disconnecting from {voice.channel.name}")
             music_queue[voice].clear()
             await voice.disconnect()
+            log.info(f"Successfully stopped music and disconnected from voice channel")
             await ctx.response.send_message("⏹️Music stopped.")
         else:
+            log.warning(f"Stop command used but bot is not in a voice channel")
             await ctx.response.send_message("I am not connected to a voice channel.")
 
     @discord.app_commands.command(name="skip", description="Skip the current song")
     async def skip(self, ctx:discord.Interaction):
         await ctx.response.defer()
+        log.info(f"Received skip request from {ctx.user.name}")
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
 
         if not voice:
+            log.debug(f"Skip command used but bot is not in a voice channel")
             await ctx.followup.send("I am not connected to a voice channel.")
             return
 
         if voice.is_playing():
+            log.info(f"Skipping current song in {voice.channel.name}")
             voice.stop()
             await ctx.followup.send("Song skipped.")
         else:
+            log.debug(f"Skip command used but no song is playing")
             await ctx.followup.send("No song is currently playing.")
 
     @discord.app_commands.command(name="volume", description="Set the volume 0~100")
     async def change_volume(self, ctx: discord.Interaction, volume: Optional[int]):
         await ctx.response.defer()
+        log.info(f"Received volume request from {ctx.user.name}: {volume}")
         voice_client = discord.utils.get(ctx.client.voice_clients, guild=ctx.guild)
         try:
             voice = music_queue[voice_client]
         except KeyError:
+            log.debug(f"Volume command used but bot is not in a voice channel")
             await ctx.followup.send("I am not connected to a voice channel.")
             return
         
         if not voice:
+            log.debug(f"Volume command used but no music queue found")
             await ctx.followup.send("I am not connected to a voice channel.")
             return
         
         if volume is None:
+            log.info(f"Current volume query in {voice.channel.name}: {int(voice.volume * 100)}%")
             await ctx.followup.send(f"🔊Current volume: {int(voice.volume * 100)}%")
             return
         
         if 0 <= volume <= 100:
+            log.info(f"Setting volume to {volume}%")
             voice.set_volume(volume / 100)
             await ctx.followup.send(f"🔊Volume set to {volume}%.")
         else:
+            log.warning(f"Invalid volume value requested: {volume}")
             await ctx.followup.send("Volume must be between 0 and 100.")
 
 async def next_song(ctx: discord.Interaction):
+    log.debug("next_song function called")
     voice = discord.utils.get(ctx.client.voice_clients, guild=ctx.guild)
     if not voice or not voice.is_connected():
+        log.warning("next_song called but voice client is not connected")
         return
     
+    log.debug("Terminating current audio process")
     music_queue[voice].current.terminate()
 
     # Check if the queue exists and is not empty
     if voice not in music_queue or music_queue[voice].queue.empty():
+        log.info(f"{voice.channel.name} Queue is empty, disconnecting.")
         await ctx.channel.send("Queue is empty. Leaving the voice channel.")
 
         if voice in music_queue:
@@ -81,14 +102,17 @@ async def next_song(ctx: discord.Interaction):
     # Get the next song from the queue
     song_id = music_queue[voice].next()
     if not song_id:
+        log.warning("Queue returned no song ID, disconnecting")
         await ctx.channel.send("No more songs in the queue. Disconnecting.")
         music_queue.pop(voice)
         await voice.disconnect()
         return
 
     # Search and play the next song
+    log.info(f"Searching for next song: {song_id}")
     results = yt.search(song_id, max_results=5)
     if not results:
+        log.error(f"No results found for song_id: {song_id}")
         await ctx.channel.send("No results found.")
         await next_song(ctx)
         return
@@ -98,9 +122,11 @@ async def next_song(ctx: discord.Interaction):
         if result.id == song_id:
             video = result
             break
+    log.info(f"Playing next song: {video.title}")
     await ctx.channel.send(f"▶️Now playing: **{video.title}**")
     audio = yt.stream(video.id)
     music_queue[voice].set_current(audio)
+    log.debug(f"Starting playback for: {video.title}")
     voice.play(
         music_queue[voice].audio,
         after=lambda _: ctx.client.loop.create_task(next_song(ctx)),

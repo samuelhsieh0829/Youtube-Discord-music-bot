@@ -47,6 +47,9 @@ class YT:
     def search(self, query: str, max_results: int = 10) -> list[Video]:
         if query == "":
             return []
+        
+        log.info(f"Searching YouTube for query: {query} with max results: {max_results}")
+
         # yt-dlp options for searching
         ydl_opts = {
             'quiet': True,  # Suppress yt-dlp output
@@ -68,6 +71,7 @@ class YT:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 if not is_url:
                     results = ydl.extract_info(f"ytsearch{max_results}:{query}", download=False)
+                    log.debug(f"Found {len(results['entries'])} results for search query: {query}")
                     # Convert results into Video objects
                     return [
                         Video(video_id=entry['id'], video_title=entry['title'], url=entry['url'])
@@ -75,6 +79,7 @@ class YT:
                     ]
                 else:
                     results = ydl.extract_info(query, download=False)
+                    log.debug(f"Found YouTube video for URL: {query} with title: {results['title']}")
                     return [
                         Video(video_id=results['id'], video_title=results['title'], url=YT.YT_BASE_URL + results['id'])
                     ]
@@ -102,6 +107,7 @@ class YT:
             f"ffmpeg -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 "
             f"-i {stream_url} -acodec libopus -f opus -ar 48000 -ac 2 pipe:1"
         )
+        log.debug(f"Video id: {video_id}, stream URL: {stream_url}")
         process = subprocess.Popen(ffmpeg_options.split(), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         return process
 

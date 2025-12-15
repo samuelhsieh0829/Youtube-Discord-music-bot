@@ -14,7 +14,8 @@ class channelQueue:
             )
         else:
             self.__audio = None
-        self.ctx = ctx
+        # self.ctx = ctx
+        # Idk why I need ctx
 
     def add(self, song:str):
         self.queue.put(song)
